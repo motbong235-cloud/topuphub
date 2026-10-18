@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  RESELLER
+  ADMIN
+}
+
+enum OrderSource {
+  WEB
+  RESELLER
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TxType {
+  PAYMENT
+  WALLET_TOPUP
+  ORDER_DEBIT
+  REFUND
+}
+
+enum TxStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  role         Role          @default(USER)
+  locale       String        @default("km")
+  createdAt    DateTime      @default(now())
+  reseller     Reseller?
+  orders       Order[]
+  transactions Transaction[]
+}
+
+model Reseller {
+  id               String        @id @default(cuid())
+  userId           String        @unique
+  user             User          @relation(fields: [userId], references: [id])
+  apiKey           String        @unique
+  apiSecretEnc     String
+  balance          Decimal       @default(0) @db.Decimal(12, 2)
+  webhookUrl       String?
+  webhookSecretEnc String
+  rateLimitPerMin  Int           @default(60)
+  active           Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  orders           Order[]
+  transactions     Transaction[]
+  apiLogs          ApiLog[]
+  webhookLogs      WebhookLog[]
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  category       String   @default("game")
+  imageUrl       String?
+  price          Decimal  @db.Decimal(12, 2)
+  resellerPrice  Decimal  @db.Decimal(12, 2)
+  currency       String   @default("USD")
+  providerCode   String
+  providerName   String   @default("khmer_topup")
+  requiresServer Boolean  @default(false)
+  active         Boolean  @default(true)
+  sort           Int      @default(0)
+  createdAt      DateTime @default(now())
+  orders         Order[]
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  code           String        @unique
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  resellerId     String?
+  reseller       Reseller?     @relation(fields: [resellerId], references: [id])
+  productId      String
+  product        Product       @relation(fields: [productId], references: [id])
+  source         OrderSource
+  target         String
+  serverId       String?
+  quantity       Int           @default(1)
+  unitPrice      Decimal       @db.Decimal(12, 2)
+  amount         Decimal       @db.Decimal(12, 2)
+  currency       String        @default("USD")
+  status         OrderStatus   @default(PENDING_PAYMENT)
+  providerRef    String?
+  paymentRef     String?
+  idempotencyKey String?
+  resellerRef    String?
+  failReason     String?
+  needsReview    Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  completedAt    DateTime?
+  transactions   Transaction[]
+
+  @@unique([resellerId, idempotencyKey])
+  @@index([status])
+  @@index([userId])
+}
+
+model Transaction {
+  id            String    @id @default(cuid())
+  orderId       String?
+  order         Order?    @relation(fields: [orderId], references: [id])
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
+  resellerId    String?
+  reseller      Reseller? @relation(fields: [resellerId], references: [id])
+  type          TxType
+  status        TxStatus  @default(PENDING)
+  gateway       String
+  gatewayTranId String?   @unique
+  amount        Decimal   @db.Decimal(12, 2)
+  currency      String    @default("USD")
+  note          String?
+  pushbackRaw   Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([resellerId])
+  @@index([status])
+}
+
+model ApiLog {
+  id         String    @id @default(cuid())
+  resellerId String?
+  reseller   Reseller? @relation(fields: [resellerId], references: [id])
+  method     String
+  path       String
+  statusCode Int
+  ip         String?
+  durationMs Int
+  createdAt  DateTime  @default(now())
+
+  @@index([resellerId, createdAt])
+}
+
+model WebhookLog {
+  id         String    @id @default(cuid())
+  resellerId String?
+  reseller   Reseller? @relation(fields: [resellerId], references: [id])
+  orderId    String?
+  direction  String
+  event      String
+  url        String?
+  payload    Json
+  statusCode Int?
+  success    Boolean   @default(false)
+  attempt    Int       @default(1)
+  error      String?
+  createdAt  DateTime  @default(now())
+
+  @@index([resellerId, createdAt])
+}
+
+model ProviderLog {
+  id           String   @id @default(cuid())
+  provider     String
+  action       String
+  requestBody  Json
+  responseBody Json?
+  statusCode   Int?
+  durationMs   Int
+  error        String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}

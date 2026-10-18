@@ -1,0 +1,69 @@
+# Render Blueprint. Plan names change over time: adjust them to what your Render account offers.
+databases:
+  - name: topuphub-db
+    plan: basic-256mb
+    databaseName: topuphub
+    user: topuphub
+
+services:
+  - type: redis                       # Render Key Value (Redis-compatible)
+    name: topuphub-redis
+    plan: starter
+    ipAllowList: []                   # empty = reachable only from your Render services
+
+  - type: web
+    name: topuphub-api
+    runtime: node
+    rootDir: apps/api
+    plan: starter
+    buildCommand: npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase: { name: topuphub-db, property: connectionString }
+      - key: REDIS_URL
+        fromService: { type: redis, name: topuphub-redis, property: connectionString }
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SECRETS_KEY            # do not rotate after go-live (encrypts reseller secrets)
+        generateValue: true
+      - key: WEBHOOK_SECRET
+        generateValue: true
+      - key: START_WORKER
+        value: "true"
+      - key: TOPUP_PROVIDER         # khmer_topup | mock
+        value: khmer_topup
+      - key: KHMER_TOPUP_BASE_URL
+        value: https://khmer-topup.com/api/v1
+      - key: KHMER_TOPUP_API_KEY
+        sync: false
+      - key: KHMER_TOPUP_SECRET
+        sync: false
+      - key: PAYWAY_MERCHANT_ID
+        sync: false
+      - key: PAYWAY_API_KEY
+        sync: false
+      - key: PAYWAY_ENV
+        value: sandbox
+      - key: PAYMENT_SIMULATION
+        value: "false"
+      - key: APP_URL                # https://topuphub.site
+        sync: false
+      - key: API_URL                # https://<your api host>  (PayWay pushback goes here)
+        sync: false
+      - key: CORS_ORIGIN            # same as APP_URL
+        sync: false
+
+  - type: web
+    name: topuphub-web
+    runtime: node
+    rootDir: apps/web
+    plan: starter
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL    # e.g. https://topuphub-api.onrender.com  (set before the first build)
+        sync: false
