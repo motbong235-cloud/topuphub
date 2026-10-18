@@ -32,6 +32,13 @@ paymentsRouter.get("/checkout/:tranId", asyncHandler(async (req, res) => {
   res.json(await getCheckoutForm(req.params.tranId));
 }));
 
+
+/** Public poll for Khmer System / PayWay checkout page. */
+paymentsRouter.get("/poll/:tranId", asyncHandler(async (req, res) => {
+  const r = await verifyAndSettle(req.params.tranId).catch(() => ({ found: false, paid: false }));
+  res.json(r);
+}));
+
 /** Poll fallback: also asks PayWay directly if the pushback has not arrived yet. */
 paymentsRouter.get("/:code/status", requireAuth(), asyncHandler(async (req, res) => {
   const order = await prisma.order.findFirst({

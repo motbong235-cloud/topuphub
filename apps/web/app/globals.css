@@ -2,4 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-slate-50 text-slate-900 antialiased; }
+:root {
+  --brand: #1d6adf;
+  --navy: #082044;
+  --ice: #e7f1ff;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  font-feature-settings: "kern";
+}
+
+/* smooth cards */
+.card-hover {
+  @apply transition-all duration-200;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -12px rgba(29, 106, 223, 0.28);
+}
+
+.hero-banner {
+  background: linear-gradient(120deg, #082044 0%, #0d3a7a 45%, #1d6adf 100%);
+  @apply rounded-2xl p-6 text-white shadow-lg relative overflow-hidden;
+}
+.hero-banner::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(94, 176, 255, 0.25);
+}
+
+.pay-qr {
+  @apply mx-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-sm;
+  max-width: 240px;
+}

@@ -13,7 +13,16 @@ apps/web   Next.js storefront, reseller dashboard, admin panel
 render.yaml · Dockerfile · docker-compose.yml (local Postgres + Redis)
 ```
 
-## What is verified and what is not (read this first)
+## Integrations
+
+| Service | Env | Purpose |
+|---------|-----|---------|
+| **Khmer TopUp** | `KHMER_TOPUP_API_KEY` | Auto game top-up delivery |
+| **Khmer System** | `KHMER_SYSTEM_SECRET_KEY` or `ABA_API_KEY` | KHQR payment |
+| **ABA PayWay** | `PAYWAY_MERCHANT_ID` + `PAYWAY_API_KEY` | Hosted checkout |
+| Gateway select | `PAYMENT_GATEWAY=auto\|payway\|khmer_system` | Prefer KS when key set |
+
+What is verified and what is not (read this first)
 
 | Area | Status |
 |---|---|
