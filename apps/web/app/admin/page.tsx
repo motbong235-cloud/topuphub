@@ -15,12 +15,47 @@ const TABS = ["stats", "products", "orders", "resellers", "transactions", "provi
 type Tab = (typeof TABS)[number];
 
 export default function AdminPage() {
-  const { user, token, loading } = useAuth();
+  const { user, token, loading, loginWithToken } = useAuth();
   const [tab, setTab] = useState<Tab>("stats");
   const [msg, setMsg] = useState("");
+  const [adminToken, setAdminToken] = useState("");
+  const [busy, setBusy] = useState(false);
   if (loading) return <p>…</p>;
-  if (!user) return <Link href={`/login?next=/${ADMIN_PATH}`} className="text-brand-600 underline">Login</Link>;
-  if (user.role !== "ADMIN") return <p className="text-red-600">Admin only</p>;
+  if (!user || user.role !== "ADMIN") {
+    return (
+      <Card className="mx-auto max-w-sm space-y-3 p-5">
+        <h1 className="text-lg font-extrabold">Admin Token</h1>
+        <p className="text-sm text-slate-500">បំពេញ ADMIN_TOKEN (មិនប្រើ email/password)</p>
+        <div>
+          <Label>Token</Label>
+          <Input
+            type="password"
+            value={adminToken}
+            onChange={(e) => setAdminToken(e.target.value)}
+            placeholder="ADMIN_TOKEN"
+            autoFocus
+          />
+        </div>
+        {msg && <p className="text-sm text-red-600">{msg}</p>}
+        <Button
+          className="w-full"
+          disabled={busy || !adminToken.trim()}
+          onClick={async () => {
+            setBusy(true);
+            setMsg("");
+            try {
+              await loginWithToken(adminToken.trim());
+            } catch (e: any) {
+              setMsg(e.message || "Invalid token");
+              setBusy(false);
+            }
+          }}
+        >
+          {busy ? "…" : "ចូល Admin"}
+        </Button>
+      </Card>
+    );
+  }
 
   const act = async (fn: () => Promise<unknown>) => { setMsg(""); try { await fn(); } catch (e: any) { setMsg(e.message); } };
   return (

@@ -1,11 +1,13 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma";
 import { asyncHandler } from "../../lib/asyncHandler";
 import { conflict, unauthorized } from "../../lib/errors";
 import { requireAuth, signToken } from "../../middleware/auth";
 import { authLimiter } from "../../middleware/rateLimit";
+import { env } from "../../config/env";
 
 export const authRouter = Router();
 
@@ -48,3 +50,33 @@ authRouter.put("/locale", requireAuth(), asyncHandler(async (req, res) => {
   await prisma.user.update({ where: { id: req.user!.id }, data: { locale } });
   res.json({ ok: true });
 }));
+
+
+/** Private admin: exchange ADMIN_TOKEN env for a JWT (no email/password). */
+authRouter.post("/admin-login", authLimiter, asyncHandler(async (req, res) => {
+  const body = z.object({ token: z.string().min(1).max(200) }).parse(req.body);
+  const expected = env.ADMIN_TOKEN;
+  if (!expected || body.token !== expected) {
+    throw unauthorized("Invalid admin token", "INVALID_ADMIN_TOKEN");
+  }
+  const email = (env.ADMIN_EMAIL || "admin@topuphub.local").toLowerCase();
+  let user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email,
+        name: "Admin",
+        role: "ADMIN",
+        passwordHash: await bcrypt.hash(cryptoRandom(), 11),
+      },
+    });
+  } else if (user.role !== "ADMIN") {
+    user = await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
+  }
+  res.json({ token: signToken(user), user: publicUser(user) });
+}));
+
+function cryptoRandom() {
+  return crypto.randomBytes(24).toString("hex");
+}
+
