@@ -5,6 +5,7 @@ import { prisma } from "./lib/prisma";
 import { redis } from "./lib/redis";
 import { startWorkers } from "./modules/orders/worker";
 import { ensureCatalogSeeded } from "./modules/catalog/syncKhmerTopup";
+import { ensureAdmin } from "./modules/auth/ensureAdmin";
 
 const app = createApp();
 const server = app.listen(env.PORT, () => {
@@ -14,7 +15,7 @@ const server = app.listen(env.PORT, () => {
 });
 
 const stopWorkers = env.START_WORKER ? startWorkers() : null;
-void ensureCatalogSeeded();
+void ensureAdmin().then(() => ensureCatalogSeeded());
 
 async function shutdown(signal: string) {
   logger.info("shutting down", { signal });
