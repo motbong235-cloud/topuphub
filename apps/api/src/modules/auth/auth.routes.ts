@@ -52,13 +52,41 @@ authRouter.put("/locale", requireAuth(), asyncHandler(async (req, res) => {
 }));
 
 
-/** Private admin: exchange ADMIN_TOKEN env for a JWT (no email/password). */
+function cleanSecret(v?: string | null) {
+  return String(v || "")
+    .replace(/^[\s\u200b\ufeff"']+|[\s\u200b\ufeff"']+$/g, "")
+    .trim();
+}
+
+function adminSecrets(): string[] {
+  // Accept any of these env values as the panel token
+  return [env.ADMIN_TOKEN, env.ADMIN_PASSWORD, process.env.ADMIN_TOKEN, process.env.ADMIN_PASSWORD]
+    .map(cleanSecret)
+    .filter((s) => s.length >= 8);
+}
+
+/** Whether ADMIN_TOKEN (or ADMIN_PASSWORD) is configured — no secret leaked. */
+authRouter.get("/admin-status", asyncHandler(async (_req, res) => {
+  const secrets = adminSecrets();
+  res.json({ configured: secrets.length > 0, minLength: 8 });
+}));
+
+/** Private admin: exchange ADMIN_TOKEN for a JWT (no email/password). */
 authRouter.post("/admin-login", authLimiter, asyncHandler(async (req, res) => {
-  const body = z.object({ token: z.string().min(1).max(200) }).parse(req.body);
-  const expected = env.ADMIN_TOKEN;
-  if (!expected || body.token !== expected) {
+  const body = z.object({ token: z.string().min(1).max(500) }).parse(req.body);
+  const provided = cleanSecret(body.token);
+  const secrets = adminSecrets();
+
+  if (!secrets.length) {
+    throw unauthorized(
+      "ADMIN_TOKEN is not set on the API server (Render env). Add ADMIN_TOKEN then redeploy.",
+      "ADMIN_TOKEN_NOT_CONFIGURED",
+    );
+  }
+  if (!provided || !secrets.includes(provided)) {
     throw unauthorized("Invalid admin token", "INVALID_ADMIN_TOKEN");
   }
+
   const email = (env.ADMIN_EMAIL || "admin@topuphub.local").toLowerCase();
   let user = await prisma.user.findUnique({ where: { email } });
   if (!user) {

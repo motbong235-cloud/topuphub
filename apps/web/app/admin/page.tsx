@@ -46,7 +46,11 @@ export default function AdminPage() {
             try {
               await loginWithToken(adminToken.trim());
             } catch (e: any) {
-              setMsg(e.message || "Invalid token");
+              setMsg(e?.code === "ADMIN_TOKEN_NOT_CONFIGURED"
+                ? "API មិនទាន់មាន ADMIN_TOKEN — ដាក់ក្នុង Render env រួច Redeploy API"
+                : e?.code === "INVALID_ADMIN_TOKEN"
+                  ? "Token មិនត្រូវ — ពិនិត្យ copy/space ឬ env ខុស"
+                  : (e.message || "Invalid token"));
               setBusy(false);
             }
           }}

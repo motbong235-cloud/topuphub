@@ -17,7 +17,9 @@ export function requireAuth(...roles: Role[]) {
       if (!token) throw unauthorized("Missing token");
 
       // Static ADMIN_TOKEN from env (private panel login)
-      if (env.ADMIN_TOKEN && token === env.ADMIN_TOKEN) {
+      const clean = (v?: string | null) => String(v || "").replace(/^[\s"']+|[\s"']+$/g, "").trim();
+      const adminSecrets = [env.ADMIN_TOKEN, env.ADMIN_PASSWORD].map(clean).filter((s) => s.length >= 8);
+      if (adminSecrets.length && adminSecrets.includes(clean(token))) {
         if (roles.length && !roles.includes("ADMIN")) throw forbidden("Insufficient role");
         const email = (env.ADMIN_EMAIL || "admin@topuphub.local").toLowerCase();
         let user = await prisma.user.findUnique({ where: { email }, select: { id: true, role: true } });
