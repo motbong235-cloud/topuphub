@@ -39,7 +39,8 @@ export default function ProductPage() {
     <div className="mx-auto max-w-md space-y-4">
       <Card className="space-y-4">
         <div>
-          <h1 className="text-xl font-bold">{p.name}</h1>
+          <p className="text-xs font-bold uppercase tracking-wide text-brand-600">{p.game_name || ""}</p>
+          <h1 className="text-xl font-bold">{p.pack_label || p.name}</h1>
           {p.description && <p className="mt-1 text-sm text-slate-600">{p.description}</p>}
         </div>
         <div><Label>{t("playerId")}</Label><Input value={target} onChange={(e) => setTarget(e.target.value)} inputMode="text" /></div>

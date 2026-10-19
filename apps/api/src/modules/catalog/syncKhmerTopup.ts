@@ -101,7 +101,8 @@ export async function syncKhmerTopupCatalog(): Promise<{
           where: { slug },
           data: {
             name,
-            category: String(g.category || "game"),
+            description: packName,
+            category: gameSlug,
             price: d(price),
             resellerPrice: d(rprice),
             providerCode,
@@ -122,6 +123,8 @@ export async function syncKhmerTopupCatalog(): Promise<{
             where: { id: byCode.id },
             data: {
               name,
+              description: packName,
+              category: gameSlug,
               price: d(price),
               resellerPrice: d(rprice),
               requiresServer: needsServer,
@@ -135,7 +138,8 @@ export async function syncKhmerTopupCatalog(): Promise<{
             data: {
               slug,
               name,
-              category: String(g.category || "game"),
+              description: packName,
+              category: gameSlug,
               price: d(price),
               resellerPrice: d(rprice),
               providerCode,
