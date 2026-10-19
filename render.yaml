@@ -16,7 +16,7 @@ services:
     runtime: node
     rootDir: apps/api
     plan: starter
-    buildCommand: npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build
+    buildCommand: npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build && (npm run seed || true)
     startCommand: npm start
     healthCheckPath: /health
     envVars:
@@ -65,5 +65,7 @@ services:
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
-      - key: NEXT_PUBLIC_API_URL    # e.g. https://topuphub-api.onrender.com  (set before the first build)
+      - key: NEXT_PUBLIC_API_URL    # e.g. https://topuphub-api.onrender.com  (set BEFORE first build, then rebuild)
+        sync: false
+      - key: API_PROXY_TARGET       # same as API URL — enables /api rewrite on web
         sync: false

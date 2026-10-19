@@ -29,6 +29,17 @@ export function createApp() {
   app.use(express.json({ limit: "1mb", verify: (req, _res, buf) => { (req as Request).rawBody = buf; } }));
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
+  app.get("/", (_req, res) => {
+    res.json({
+      name: "TopUpHub API",
+      ok: true,
+      docs: "/api/docs",
+      health: "/health",
+      auth: "/api/auth/register",
+      products: "/api/products",
+    });
+  });
+
   app.get("/health", async (_req, res) => {
     try {
       await prisma.$queryRaw`SELECT 1`;
