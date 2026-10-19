@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -39,7 +38,6 @@ function groupGames(products: Product[]): Game[] {
     const fromName = p.name.includes(" · ") ? p.name.split(" · ")[0].trim() : "";
     const name = p.game_name || fromName || p.name;
     let key = p.game_key || "";
-    // ignore generic category "game" from old seed
     if (!key && p.category && p.category !== "game") key = p.category;
     if (!key) key = slugify(fromName || p.name);
     if (!map.has(key)) {
@@ -49,6 +47,15 @@ function groupGames(products: Product[]): Game[] {
   }
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
+
+const GRADIENTS = [
+  "linear-gradient(145deg,#1d6adf 0%,#0b3d91 100%)",
+  "linear-gradient(145deg,#0f766e 0%,#134e4a 100%)",
+  "linear-gradient(145deg,#7c3aed 0%,#4c1d95 100%)",
+  "linear-gradient(145deg,#d97706 0%,#9a3412 100%)",
+  "linear-gradient(145deg,#db2777 0%,#9d174d 100%)",
+  "linear-gradient(145deg,#0284c7 0%,#0c4a6e 100%)",
+];
 
 export default function HomePage() {
   const { t } = useI18n();
@@ -72,69 +79,82 @@ export default function HomePage() {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="page-enter space-y-6">
       <section className="hero-banner">
-        <p className="text-xs font-bold uppercase tracking-wider text-blue-200 relative z-10">TopUpHub</p>
-        <h1 className="mt-1 text-2xl font-black relative z-10 sm:text-3xl">
-          ហាងហ្គេមព្រីមៀម · Fast Game Top-up
-        </h1>
-        <p className="mt-2 max-w-md text-sm text-blue-100 relative z-10">
-          ជ្រើសហ្គេម → ជ្រើសកញ្ចប់ · បង់ KHQR · Auto top-up
+        <p className="relative z-10 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-200">
+          TopUpHub Cambodia
         </p>
+        <h1 className="relative z-10 mt-1 text-2xl font-black leading-tight sm:text-3xl">
+          Top-up ហ្គេមលឿន · សុវត្ថិភាព
+        </h1>
+        <p className="relative z-10 mt-2 max-w-lg text-sm text-blue-100/95">
+          ជ្រើសហ្គេម → ជ្រើសកញ្ចប់ → បង់ KHQR · ភ្ជាប់ Khmer TopUp
+        </p>
+        <div className="relative z-10 mt-4 flex flex-wrap gap-2">
+          {["KHQR", "Khmer TopUp", "Reseller API"].map((x) => (
+            <span key={x} className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+              {x}
+            </span>
+          ))}
+        </div>
       </section>
 
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="ស្វែងរកហ្គេម… Search games"
-        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-soft outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-      />
-
-      <div className="flex items-end justify-between gap-2">
-        <h2 className="text-lg font-extrabold">{t("products") || "Games"}</h2>
-        <span className="text-xs text-slate-500">{filtered.length} games</span>
+      <div className="relative">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="🔍 ស្វែងរកហ្គេម… Search games"
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm shadow-sm outline-none ring-brand-500/20 transition focus:border-brand-500 focus:ring-4"
+        />
       </div>
 
-      {loading && <p className="text-slate-500">{t("loading") || "Loading…"}</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      <div className="flex items-end justify-between">
+        <div>
+          <h2 className="text-lg font-extrabold tracking-tight">{t("products") || "Games"}</h2>
+          <p className="text-xs text-slate-500">ជ្រើសសេវាកម្មហ្គេម</p>
+        </div>
+        <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-500 shadow-sm">
+          {filtered.length}
+        </span>
+      </div>
+
+      {loading && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-44 animate-pulse rounded-2xl bg-slate-200/70" />
+          ))}
+        </div>
+      )}
+      {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       {!loading && !filtered.length && (
-        <p className="text-slate-500">
-          {t("noProducts") || "No games yet — Admin → Sync from Khmer TopUp"}
-        </p>
+        <div className="soft-panel text-center text-sm text-slate-600">
+          មិនទាន់មានហ្គេម — Admin → <b>Sync from Khmer TopUp</b>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {filtered.map((g, i) => {
-          const minPrice = Math.min(...g.packages.map((p) => Number(p.price) || 0));
+          const minPrice = Math.min(...g.packages.map((p) => Number(p.price) || Infinity));
+          const art = g.image_url
+            ? { backgroundImage: `url(${g.image_url})` }
+            : { background: GRADIENTS[i % GRADIENTS.length] };
           return (
-            <Link key={g.slug} href={`/games/${encodeURIComponent(g.slug)}`}>
-              <Card className="card-hover h-full border-slate-200 shadow-soft">
-                {g.image_url ? (
-                  <img src={g.image_url} alt={g.name} className="mb-2 h-24 w-full rounded-xl object-cover" />
-                ) : (
-                  <div
-                    className="mb-2 flex h-24 items-center justify-center rounded-xl text-2xl font-black text-white"
-                    style={{
-                      background: [
-                        "linear-gradient(145deg,#4aa2ff,#1d6adf)",
-                        "linear-gradient(145deg,#f59e0b,#d97706)",
-                        "linear-gradient(145deg,#34d399,#059669)",
-                        "linear-gradient(145deg,#a78bfa,#7c3aed)",
-                      ][i % 4],
-                    }}
-                  >
-                    {(g.name || "?").slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="text-sm font-bold leading-snug">{g.name}</div>
-                <div className="mt-1 text-xs text-slate-500">{g.packages.length} packages</div>
-                <div className="mt-1 text-sm font-extrabold text-brand-600">
-                  from ${Number.isFinite(minPrice) ? minPrice.toFixed(2) : "—"}
+            <Link key={g.slug} href={`/games/${encodeURIComponent(g.slug)}`} className="game-tile card-hover block">
+              <div className="game-tile-art" style={art as any}>
+                <div className="relative z-10">
+                  <div className="text-[11px] font-bold text-white/80">{g.packages.length} packs</div>
+                  <div className="text-sm font-black text-white drop-shadow">{g.name}</div>
                 </div>
-                <div className="mt-2 rounded-lg bg-brand-50 py-1.5 text-center text-xs font-bold text-brand-600">
-                  មើលកញ្ចប់
+              </div>
+              <div className="game-tile-body">
+                <div className="text-sm font-bold text-slate-800 line-clamp-1">{g.name}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-slate-500">ពី</span>
+                  <span className="text-sm font-extrabold text-brand-600">
+                    ${Number.isFinite(minPrice) ? minPrice.toFixed(2) : "—"}
+                  </span>
                 </div>
-              </Card>
+              </div>
             </Link>
           );
         })}

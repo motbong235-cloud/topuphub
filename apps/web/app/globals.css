@@ -4,40 +4,115 @@
 
 :root {
   --brand: #1d6adf;
+  --brand-2: #4aa2ff;
   --navy: #082044;
-  --ice: #e7f1ff;
+  --ice: #e8f1ff;
+  --surface: #ffffff;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --shadow: 0 10px 30px -14px rgba(8, 32, 68, 0.22);
+  --radius: 1rem;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply antialiased text-slate-900;
   font-feature-settings: "kern";
+  background:
+    radial-gradient(900px 420px at 8% -8%, rgba(29, 106, 223, 0.1), transparent 55%),
+    radial-gradient(700px 360px at 100% 0%, rgba(8, 32, 68, 0.06), transparent 50%),
+    #f4f7fc;
+  min-height: 100dvh;
 }
 
-/* smooth cards */
+/* Cards */
 .card-hover {
-  @apply transition-all duration-200;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, border-color 0.2s ease;
 }
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -12px rgba(29, 106, 223, 0.28);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -16px rgba(29, 106, 223, 0.35);
+  border-color: rgba(29, 106, 223, 0.35);
 }
 
 .hero-banner {
-  background: linear-gradient(120deg, #082044 0%, #0d3a7a 45%, #1d6adf 100%);
-  @apply rounded-2xl p-6 text-white shadow-lg relative overflow-hidden;
+  background: linear-gradient(125deg, #082044 0%, #0d3a7a 42%, #1d6adf 100%);
+  @apply relative overflow-hidden rounded-2xl p-6 text-white shadow-lg sm:p-8;
+}
+.hero-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 90% 10%, rgba(125, 211, 252, 0.28), transparent 45%);
+  pointer-events: none;
 }
 .hero-banner::after {
   content: "";
   position: absolute;
-  right: -40px;
-  top: -40px;
-  width: 160px;
-  height: 160px;
+  right: -48px;
+  bottom: -48px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
-  background: rgba(94, 176, 255, 0.25);
+  background: rgba(94, 176, 255, 0.18);
+}
+
+/* Game tile */
+.game-tile {
+  @apply relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm;
+}
+.game-tile-art {
+  @apply relative flex h-28 items-end justify-start p-3 sm:h-32;
+  background-size: cover;
+  background-position: center;
+}
+.game-tile-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(8, 32, 68, 0.75), transparent 55%);
+}
+.game-tile-body {
+  @apply space-y-1 p-3 pt-2;
+}
+
+/* Package row (clean) */
+.pack-row {
+  @apply flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition;
+}
+.pack-row:hover {
+  border-color: rgba(29, 106, 223, 0.4);
+  box-shadow: 0 10px 24px -14px rgba(29, 106, 223, 0.35);
+  transform: translateY(-1px);
+}
+.pack-icon {
+  @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white;
+  background: linear-gradient(145deg, #4aa2ff, #1d6adf);
+}
+.pack-price {
+  @apply rounded-xl bg-[#e8f1ff] px-3 py-1.5 text-sm font-extrabold text-[#1d6adf];
+}
+
+/* Checkout card */
+.checkout-shell {
+  @apply mx-auto max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg;
+}
+.checkout-head {
+  background: linear-gradient(120deg, #082044, #1d6adf);
+  @apply px-5 py-4 text-white;
 }
 
 .pay-qr {
-  @apply mx-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-sm;
-  max-width: 240px;
+  @apply mx-auto max-w-[240px] rounded-2xl border border-slate-200 bg-white p-3 shadow-sm;
+}
+
+.soft-panel {
+  @apply rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm backdrop-blur;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.page-enter {
+  animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

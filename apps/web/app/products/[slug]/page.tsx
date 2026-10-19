@@ -1,8 +1,8 @@
 "use client";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -21,39 +21,87 @@ export default function ProductPage() {
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
-  if (loading) return <p>{t("loading")}</p>;
+  if (loading) return <p className="page-enter text-slate-500">{t("loading")}</p>;
   if (error || !data) return <p className="text-red-600">{error ?? "Not found"}</p>;
   const p = data.product;
   const total = (Number(p.price) * qty).toFixed(2);
+  const packLabel = p.pack_label || p.name;
+  const gameName = p.game_name || "";
+  const gameKey = p.game_key || p.category;
 
   async function pay() {
     if (!user) return router.push(`/login?next=/products/${slug}`);
-    setBusy(true); setErr("");
+    setBusy(true);
+    setErr("");
     try {
-      const r = await api<{ tranId: string }>("/api/payments/payway/create", { token, body: { productId: p.id, target, serverId: serverId || undefined, quantity: qty } });
+      const r = await api<{ tranId: string }>("/api/payments/payway/create", {
+        token,
+        body: { productId: p.id, target, serverId: serverId || undefined, quantity: qty },
+      });
       router.push(`/pay/${r.tranId}`);
-    } catch (e: any) { setErr(e.message); setBusy(false); }
+    } catch (e: any) {
+      setErr(e.message);
+      setBusy(false);
+    }
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-4">
-      <Card className="space-y-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-brand-600">{p.game_name || ""}</p>
-          <h1 className="text-xl font-bold">{p.pack_label || p.name}</h1>
-          {p.description && <p className="mt-1 text-sm text-slate-600">{p.description}</p>}
+    <div className="page-enter mx-auto max-w-md space-y-4">
+      {gameKey ? (
+        <Link href={`/games/${encodeURIComponent(gameKey)}`} className="text-sm font-semibold text-brand-600 hover:underline">
+          ← {gameName || "Packages"}
+        </Link>
+      ) : (
+        <Link href="/" className="text-sm font-semibold text-brand-600 hover:underline">
+          ← Home
+        </Link>
+      )}
+
+      <div className="checkout-shell">
+        <div className="checkout-head">
+          {gameName ? <p className="text-[11px] font-bold uppercase tracking-wide text-blue-200">{gameName}</p> : null}
+          <h1 className="text-xl font-black">{packLabel}</h1>
+          <p className="mt-1 text-2xl font-black text-white">${Number(p.price).toFixed(2)}</p>
         </div>
-        <div><Label>{t("playerId")}</Label><Input value={target} onChange={(e) => setTarget(e.target.value)} inputMode="text" /></div>
-        {p.requires_server && <div><Label>{t("serverId")}</Label><Input value={serverId} onChange={(e) => setServerId(e.target.value)} /></div>}
-        <div><Label>{t("quantity")}</Label><Input type="number" min={1} max={50} value={qty} onChange={(e) => setQty(Math.max(1, Math.min(50, Number(e.target.value) || 1)))} /></div>
-        <div className="flex items-center justify-between border-t pt-3">
-          <span className="text-slate-600">{t("total")}</span><span className="text-xl font-extrabold text-brand-600">${total}</span>
+
+        <div className="space-y-4 p-5">
+          <div>
+            <Label>{t("playerId")}</Label>
+            <Input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="Player / User ID" />
+          </div>
+          {p.requires_server && (
+            <div>
+              <Label>{t("serverId")}</Label>
+              <Input value={serverId} onChange={(e) => setServerId(e.target.value)} placeholder="Server / Zone ID" />
+            </div>
+          )}
+          <div>
+            <Label>{t("quantity")}</Label>
+            <Input
+              type="number"
+              min={1}
+              max={50}
+              value={qty}
+              onChange={(e) => setQty(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+            <span className="text-sm font-semibold text-slate-600">{t("total")}</span>
+            <span className="text-xl font-black text-brand-600">${total}</span>
+          </div>
+
+          {err && <p className="text-sm text-red-600">{err}</p>}
+
+          <Button
+            className="w-full py-3 text-base"
+            disabled={busy || !target.trim() || (p.requires_server && !serverId.trim())}
+            onClick={pay}
+          >
+            {user ? t("payNow") : t("loginToBuy")}
+          </Button>
         </div>
-        {err && <p className="text-sm text-red-600">{err}</p>}
-        <Button className="w-full" disabled={busy || !target.trim() || (p.requires_server && !serverId.trim())} onClick={pay}>
-          {user ? t("payNow") : t("loginToBuy")}
-        </Button>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -17,11 +16,8 @@ type Product = {
   pack_label?: string;
   category?: string;
   requires_server?: boolean;
+  image_url?: string;
 };
-
-function gameKeyOf(p: Product) {
-  return p.game_key || p.category || "";
-}
 
 export default function GamePackagesPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -53,50 +49,52 @@ export default function GamePackagesPage() {
       return key === gameSlug || p.slug.startsWith(gameSlug + "-");
     });
   }, [list, gameSlug]);
+
   const gameName = packs[0]?.game_name || packs[0]?.name?.split(" · ")[0] || gameSlug;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm">
-        <Link href="/" className="text-brand-600 underline">
-          ← Games
-        </Link>
-      </div>
-      <div>
-        <h1 className="text-xl font-extrabold sm:text-2xl">{gameName}</h1>
-        <p className="text-sm text-slate-500">{packs.length} packages · ជ្រើសកញ្ចប់</p>
-      </div>
+    <div className="page-enter mx-auto max-w-lg space-y-5">
+      <Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline">
+        ← ត្រលប់ទៅហ្គេម
+      </Link>
 
-      {loading && <p>{t("loading") || "Loading…"}</p>}
-      {error && <p className="text-red-600">{error}</p>}
-      {!loading && !packs.length && (
-        <Card className="p-4 text-sm text-slate-600">
-          No packages for this game. Admin → <b>Sync from Khmer TopUp</b>
-        </Card>
-      )}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div
+          className="relative px-5 py-6 text-white"
+          style={{ background: "linear-gradient(125deg,#082044,#1d6adf)" }}
+        >
+          <p className="text-[11px] font-bold uppercase tracking-wider text-blue-200">Service</p>
+          <h1 className="mt-1 text-xl font-black sm:text-2xl">{gameName}</h1>
+          <p className="mt-1 text-sm text-blue-100">{packs.length} កញ្ចប់ · ជ្រើសហើយ top-up</p>
+        </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        {packs.map((p) => {
-          const label = p.pack_label || (p.name.includes(" · ") ? p.name.split(" · ").slice(1).join(" · ") : p.name);
-          return (
-            <Link key={p.id} href={`/products/${p.slug}`}>
-              <Card className="card-hover flex items-center justify-between gap-3 border-slate-200 p-4 shadow-soft">
-                <div>
-                  <div className="font-bold">{label}</div>
-                  {p.requires_server ? (
-                    <div className="mt-0.5 text-xs text-slate-500">Requires server / zone ID</div>
-                  ) : null}
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-extrabold text-brand-600">
-                    ${Number(p.price).toFixed(2)}
+        <div className="space-y-2.5 p-4">
+          {loading && <p className="text-sm text-slate-500">{t("loading") || "Loading…"}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {!loading && !packs.length && (
+            <p className="rounded-xl bg-slate-50 px-3 py-4 text-center text-sm text-slate-600">
+              មិនមានកញ្ចប់ — Admin Sync Khmer TopUp
+            </p>
+          )}
+
+          {packs.map((p) => {
+            const label =
+              p.pack_label ||
+              (p.name.includes(" · ") ? p.name.split(" · ").slice(1).join(" · ") : p.name);
+            return (
+              <Link key={p.id} href={`/products/${p.slug}`} className="pack-row block">
+                <div className="pack-icon">{String(label).replace(/[^\d]/g, "").slice(0, 3) || "◆"}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-bold text-slate-800">{label}</div>
+                  <div className="text-xs text-slate-500">
+                    {p.requires_server ? "ត្រូវ Server / Zone ID" : "Player ID"}
                   </div>
-                  <div className="text-xs font-bold text-brand-500">Top Up →</div>
                 </div>
-              </Card>
-            </Link>
-          );
-        })}
+                <div className="pack-price">${Number(p.price).toFixed(2)}</div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
