@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useData } from "@/lib/useData";
 import { cn } from "@/lib/utils";
 import { LogTable } from "@/components/LogTable";
+import { ADMIN_PATH } from "@/lib/adminPath";
 
 const TABS = ["stats", "products", "orders", "resellers", "transactions", "provider-logs"] as const;
 type Tab = (typeof TABS)[number];
@@ -18,7 +19,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("stats");
   const [msg, setMsg] = useState("");
   if (loading) return <p>…</p>;
-  if (!user) return <Link href="/login?next=/admin" className="text-brand-600 underline">Login</Link>;
+  if (!user) return <Link href={`/login?next=/${ADMIN_PATH}`} className="text-brand-600 underline">Login</Link>;
   if (user.role !== "ADMIN") return <p className="text-red-600">Admin only</p>;
 
   const act = async (fn: () => Promise<unknown>) => { setMsg(""); try { await fn(); } catch (e: any) { setMsg(e.message); } };

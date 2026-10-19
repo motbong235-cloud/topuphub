@@ -65,6 +65,8 @@ services:
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
+      - key: NEXT_PUBLIC_ADMIN_PATH
+        value: th-console
       - key: NEXT_PUBLIC_API_URL    # e.g. https://topuphub-api.onrender.com  (set BEFORE first build, then rebuild)
         sync: false
       - key: API_PROXY_TARGET       # same as API URL — enables /api rewrite on web

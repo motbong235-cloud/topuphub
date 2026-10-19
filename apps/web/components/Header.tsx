@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "./ui/button";
+import { ADMIN_PATH } from "@/lib/adminPath";
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -28,7 +29,7 @@ export function Header() {
             </Link>
           )}
           {user?.role === "ADMIN" && (
-            <Link href="/admin" className="text-slate-600 hover:text-brand-600">
+            <Link href={`/${ADMIN_PATH}`} className="text-slate-600 hover:text-brand-600">
               {t("admin")}
             </Link>
           )}
