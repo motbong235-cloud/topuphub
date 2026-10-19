@@ -38,10 +38,21 @@ export default function GamePackagesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const packs = useMemo(
-    () => list.filter((p) => gameKeyOf(p) === gameSlug || p.slug.startsWith(gameSlug)),
-    [list, gameSlug],
-  );
+  const packs = useMemo(() => {
+    return list.filter((p) => {
+      const fromName = p.name.includes(" · ") ? p.name.split(" · ")[0].trim() : "";
+      const key =
+        p.game_key ||
+        (p.category && p.category !== "game" ? p.category : "") ||
+        (fromName
+          ? fromName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "")
+          : p.slug);
+      return key === gameSlug || p.slug.startsWith(gameSlug + "-");
+    });
+  }, [list, gameSlug]);
   const gameName = packs[0]?.game_name || packs[0]?.name?.split(" · ")[0] || gameSlug;
 
   return (

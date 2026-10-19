@@ -25,11 +25,23 @@ type Game = {
   packages: Product[];
 };
 
+function slugify(s: string) {
+  return String(s || "game")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80) || "game";
+}
+
 function groupGames(products: Product[]): Game[] {
   const map = new Map<string, Game>();
   for (const p of products) {
-    const key = p.game_key || p.category || "other";
-    const name = p.game_name || (p.name.includes(" · ") ? p.name.split(" · ")[0] : p.name);
+    const fromName = p.name.includes(" · ") ? p.name.split(" · ")[0].trim() : "";
+    const name = p.game_name || fromName || p.name;
+    let key = p.game_key || "";
+    // ignore generic category "game" from old seed
+    if (!key && p.category && p.category !== "game") key = p.category;
+    if (!key) key = slugify(fromName || p.name);
     if (!map.has(key)) {
       map.set(key, { slug: key, name, image_url: p.image_url, packages: [] });
     }
