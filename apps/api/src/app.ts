@@ -23,8 +23,22 @@ export function createApp() {
   // Swagger UI needs inline scripts, so it is mounted before helmet's strict CSP.
   app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openapi as any));
 
-  app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN.split(",").map((s) => s.trim()), allowedHeaders: ["Content-Type", "Authorization", "X-API-KEY", "X-TIMESTAMP", "X-SIGNATURE", "X-IDEMPOTENCY-KEY"] }));
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false, // API only; CSP is for the web app
+  }));
+  const corsOrigins = env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean);
+  app.use(cors({
+    origin: (origin, cb) => {
+      // allow same-origin tools (no Origin) and configured web hosts
+      if (!origin || corsOrigins.includes(origin) || corsOrigins.includes("*")) return cb(null, true);
+      // also allow *.onrender.com web previews during setup
+      if (/^https:\/\/[a-z0-9-]+\.onrender\.com$/i.test(origin)) return cb(null, true);
+      return cb(null, false);
+    },
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-API-KEY", "X-TIMESTAMP", "X-SIGNATURE", "X-IDEMPOTENCY-KEY"],
+  }));
   // Keep the raw bytes: the reseller HMAC signature covers the exact request body.
   app.use(express.json({ limit: "1mb", verify: (req, _res, buf) => { (req as Request).rawBody = buf; } }));
   app.use(express.urlencoded({ extended: false, limit: "1mb" }));
