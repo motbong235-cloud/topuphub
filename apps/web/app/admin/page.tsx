@@ -29,7 +29,7 @@ export default function AdminPage() {
       </div>
       {msg && <p className="rounded bg-amber-50 p-2 text-sm text-amber-800">{msg}</p>}
       {tab === "stats" && <Stats token={token} />}
-      {tab === "products" && <Products token={token} act={act} />}
+      {tab === "products" && <Products token={token} act={act} setMsg={setMsg} />}
       {tab === "orders" && <Orders token={token} act={act} />}
       {tab === "resellers" && <Resellers token={token} act={act} setMsg={setMsg} />}
       {tab === "transactions" && <Transactions token={token} act={act} />}
@@ -49,13 +49,22 @@ function Stats({ token }: { token: string | null }) {
   return <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{cards.map(([k, v]) => <Card key={k}><div className="text-xs text-slate-500">{k}</div><div className="text-xl font-bold">{v}</div></Card>)}</div>;
 }
 
-function Products({ token, act }: any) {
+function Products({ token, act, setMsg }: any) {
   const { data, reload } = useData<any>("/api/admin/products", token);
   const empty = { slug: "", name: "", price: "", resellerPrice: "", providerCode: "", category: "game", requiresServer: false };
   const [f, setF] = useState<any>(empty);
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   return (
     <div className="space-y-4">
+
+      <Card className="flex flex-wrap items-center gap-2 p-3">
+        <Button onClick={() => act(async () => {
+          const r = await api("/api/admin/sync-catalog", { method: "POST", token, body: {} });
+          setMsg(`Synced: +${r.created} new, ${r.updated} updated, total ${r.total}`);
+          await reload();
+        })}>Sync from Khmer TopUp</Button>
+        <span className="text-xs text-slate-500">ទាញ games/packages ពី API key → products</span>
+      </Card>
       <Card className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div><Label>slug</Label><Input value={f.slug} onChange={(e) => set("slug", e.target.value)} /></div>
         <div><Label>name</Label><Input value={f.name} onChange={(e) => set("name", e.target.value)} /></div>

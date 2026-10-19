@@ -4,6 +4,7 @@ import { z } from "zod";
 import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { asyncHandler } from "../../lib/asyncHandler";
+import { syncKhmerTopupCatalog } from "../catalog/syncKhmerTopup";
 import { badRequest, conflict, notFound } from "../../lib/errors";
 import { encryptSecret, randomToken } from "../../lib/crypto";
 import { requireAuth } from "../../middleware/auth";
@@ -47,6 +48,27 @@ adminRouter.get("/stats", asyncHandler(async (_req, res) => {
 }));
 
 // ---- products
+
+// ---- sync Khmer TopUp catalogue into products
+adminRouter.post("/sync-catalog", asyncHandler(async (_req, res) => {
+  const r = await syncKhmerTopupCatalog();
+  if (!r.ok) return res.status(502).json({ error: { code: "SYNC_FAILED", message: r.error || "Sync failed" } });
+  res.json(r);
+}));
+
+adminRouter.get("/integrations", asyncHandler(async (_req, res) => {
+  const { env } = await import("../../config/env");
+  const { khmerSystemConfigured } = await import("../payments/khmerSystem.client");
+  const { paywayConfigured } = await import("../payments/payway.client");
+  res.json({
+    khmer_topup: { ready: Boolean(env.KHMER_TOPUP_API_KEY), base: env.KHMER_TOPUP_BASE_URL, provider: env.TOPUP_PROVIDER_RESOLVED },
+    khmer_system: { ready: khmerSystemConfigured() },
+    payway: { ready: paywayConfigured() },
+    payment_gateway: env.PAYMENT_GATEWAY_RESOLVED,
+    products: await (await import("../../lib/prisma")).prisma.product.count({ where: { active: true } }),
+  });
+}));
+
 adminRouter.get("/products", asyncHandler(async (_req, res) => {
   const rows = await prisma.product.findMany({ orderBy: [{ sort: "asc" }, { name: "asc" }] });
   res.json({ products: rows });

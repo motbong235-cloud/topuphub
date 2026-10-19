@@ -26,7 +26,14 @@ function Form() {
     try {
       if (REG) await auth.register(email, password, name || undefined); else await auth.login(email, password);
       router.push(next.startsWith("/") ? next : "/");
-    } catch (e: any) { setErr(e.message); setBusy(false); }
+    } catch (e: any) {
+      const m = e?.message || "Register failed";
+      if (e?.code === "EMAIL_TAKEN" || /already/i.test(m)) setErr("Email នេះមានរួចហើយ — សូម Login");
+      else if (/password|min/i.test(m)) setErr("ពាក្យសម្ងាត់យ៉ាងហោច 8 តួ");
+      else if (/fetch|Failed|Network|CORS/i.test(m)) setErr("ភ្ជាប់ API មិនបាន — ពិនិត្យ NEXT_PUBLIC_API_URL");
+      else setErr(m);
+      setBusy(false);
+    }
   }
   return (
     <Card className="mx-auto max-w-sm">

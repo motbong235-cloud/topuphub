@@ -4,6 +4,7 @@ import { logger } from "./lib/logger";
 import { prisma } from "./lib/prisma";
 import { redis } from "./lib/redis";
 import { startWorkers } from "./modules/orders/worker";
+import { ensureCatalogSeeded } from "./modules/catalog/syncKhmerTopup";
 
 const app = createApp();
 const server = app.listen(env.PORT, () => {
@@ -13,6 +14,7 @@ const server = app.listen(env.PORT, () => {
 });
 
 const stopWorkers = env.START_WORKER ? startWorkers() : null;
+void ensureCatalogSeeded();
 
 async function shutdown(signal: string) {
   logger.info("shutting down", { signal });
