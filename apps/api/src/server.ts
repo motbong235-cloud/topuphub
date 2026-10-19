@@ -9,6 +9,7 @@ import { ensureAdmin } from "./modules/auth/ensureAdmin";
 
 const app = createApp();
 const server = app.listen(env.PORT, () => {
+  logger.info("admin token env", { configured: Boolean(String(process.env.ADMIN_TOKEN || process.env.ADMIN_PASSWORD || "").trim()) });
   logger.info("TopUpHub API listening", {
     port: env.PORT, provider: env.TOPUP_PROVIDER_RESOLVED, payway: env.PAYWAY_ENV, simulation: env.PAYMENT_SIMULATION,
   });

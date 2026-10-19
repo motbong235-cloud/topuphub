@@ -59,10 +59,15 @@ function cleanSecret(v?: string | null) {
 }
 
 function adminSecrets(): string[] {
-  // Accept any of these env values as the panel token
-  return [env.ADMIN_TOKEN, env.ADMIN_PASSWORD, process.env.ADMIN_TOKEN, process.env.ADMIN_PASSWORD]
-    .map(cleanSecret)
-    .filter((s) => s.length >= 8);
+  const keys = [
+    env.ADMIN_TOKEN,
+    env.ADMIN_PASSWORD,
+    process.env.ADMIN_TOKEN,
+    process.env.ADMIN_PASSWORD,
+    process.env.ADMIN_SECRET,
+    process.env.ADMIN_PANEL_TOKEN,
+  ];
+  return [...new Set(keys.map(cleanSecret).filter((s) => s.length >= 8))];
 }
 
 /** Whether ADMIN_TOKEN (or ADMIN_PASSWORD) is configured — no secret leaked. */
